@@ -1,16 +1,36 @@
-# This is a sample Python script.
+from typing import Optional
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pymongo import MongoClient
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+conn = MongoClient("mongodb+srv://new_user_fast_api:G4z11b5ymUnKvBR0@cluster1.ibryvvz.mongodb.net/notes")
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+@app.get("/", response_class=HTMLResponse)
+async def read_item(request: Request):
+    docs = conn.notes.notes.find({})
+    newDocs = []
+    for doc in docs:
+        newDocs.append({
+            "id": doc["_id"],
+            "note": doc["note"],
+        })
+
+    return templates.TemplateResponse("index.html", {"request": request, "newDocs": newDocs})
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+@app.get("/items/{item_id}")
+async def read_item(item_id : int, q: str | None = None):
+    print("ajmal")
+    return {"item_id": item_id, "q": q}
+
+
